@@ -1,47 +1,57 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+<script setup lang="ts">
+import { computed, ref } from 'vue';
+import Layout from './components/widgets/Layout.vue';
+import { leftCollection, rightCollection } from './shared/collections';
+import { IItem } from './shared/types';
+import Box from './components/features/Box.vue';
+import Item from './components/features/Item.vue';
+import GridBox from './components/features/GridBox.vue';
+
+const leftBoxItems = ref<IItem[]>(leftCollection)
+const rightBoxItems = ref<IItem[]>(rightCollection)
+
+const selectedLeftBoxIds = ref<Set<number>>(new Set())
+const selectedRightBoxItem = ref<null | IItem>(null)
+
+const selectedLeftBoxItems = computed(() => leftBoxItems.value.filter(item => selectedLeftBoxIds.value.has(item.id)))
+
+const selectItem = (id: number) => {
+  if (selectedLeftBoxIds.value.has(id)) {
+    selectedLeftBoxIds.value.delete(id)
+  } else if (selectedLeftBoxIds.value.size < 6) {
+    selectedLeftBoxIds.value.add(id)
+  }
+}
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+  <Layout>
+    <div class="flex flex-col gap-4">
+      <section class="flex gap-4 md:min-h-[20vh]">
+        <Box>
+          <GridBox>
+            <Item v-for="item in selectedLeftBoxItems" :key="item.id" :id="item.id" :name="item.name" />
+          </GridBox>
+        </Box>
+        <Box>
+          <Item v-if="selectedRightBoxItem" :id="selectedRightBoxItem.id" :name="selectedRightBoxItem.name" fill />
+        </Box>
+      </section>
+      <section class="flex gap-4 md:min-h-[55vh]">
+        <Box>
+          <GridBox>
+            <Item v-for="item in leftBoxItems" :key="item.id" :id="item.id" :name="item.name"
+              :selected="selectedLeftBoxIds.has(item.id)" @click="selectItem(item.id)" />
+          </GridBox>
+        </Box>
+        <Box>
+          <GridBox>
+            <Item v-for="item in rightBoxItems" :key="item.id" :id="item.id" :name="item.name"
+              :selected="item.id === selectedRightBoxItem?.id"
+              @click="selectedRightBoxItem = selectedRightBoxItem?.id === item.id ? null : item" />
+          </GridBox>
+        </Box>
+      </section>
     </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
+  </Layout>
 </template>
-
-<style scoped>
-header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
-</style>
